@@ -743,43 +743,22 @@ export interface SidebarSettingsFace {
   update(patch: Record<string, unknown>, expectedRevision?: number): Promise<{ value?: unknown; revision?: number }>
 }
 
+type SidebarRoot = (sessionId: string, clientCwd?: string) => Promise<string>
+
 function buildApi(
   ctx: Context,
   resolved: ResolvedSidebarConfig,
   getSettings: () => SidebarSettingsFace | undefined,
+  sidebarRoot: SidebarRoot,
   assistantLive: AssistantLiveBuffer,
   archiveTasks: ArchiveTasks,
   sidechatSignal: AbortSignal,
 ): Record<string, ApiMethod> {
-  /**
-   * Same-key sharing for the shared cwd path. Every file/Git route below
-   * resolves the session cwd through here, and a session switch fires them at
-   * once. Cold resolution is now a header-only read (see `storedHeaderCwdOf`),
-   * but the whole resolution still folds the active-worktree scan, so sharing
-   * one leader keeps a burst from repeating that too. Concurrent asks for the
-   * same session + client hint share ONE resolution; the hint is part of the
-   * key because it is a fallback the result depends on. No TTL: the stored
-   * header is memoized, and a live session's committed directory is re-read on
-   * every ask after this short-lived entry is dropped.
-   */
-  const cwdInFlight = new Map<string, Promise<{ sessionId: string; cwd: string }>>()
   const cwdOf = async (payload: unknown): Promise<{ sessionId: string; cwd: string }> => {
     const sessionId = requireString(payload, 'sessionId')
     const record = payload as { cwd?: unknown } | null
     const clientCwd = typeof record?.cwd === 'string' && record.cwd !== '' ? record.cwd : undefined
-    const key = `${sessionId}\u0000${clientCwd ?? ''}`
-    const pending = cwdInFlight.get(key)
-    if (pending !== undefined) return pending
-    const resolved = (async (): Promise<{ sessionId: string; cwd: string }> => ({
-      sessionId,
-      cwd: await activeWorktreeRootOf(ctx, sessionId, await sessionCwdOf(ctx, sessionId, clientCwd)),
-    }))()
-    cwdInFlight.set(key, resolved)
-    try {
-      return await resolved
-    } finally {
-      cwdInFlight.delete(key)
-    }
+    return { sessionId, cwd: await sidebarRoot(sessionId, clientCwd) }
   }
   /** Resolve the optional Git-panel checkout selector against the selected
    * session repository. Unlike `cwd`, `worktree` is never trusted directly. */
@@ -1506,6 +1485,11 @@ export function apply(ctx: Context, config?: SidebarConfig): void {
   // Deployments without a settings service simply never fill the face and the
   // client falls back to the schema defaults.
   let settingsFace: SidebarSettingsFace | undefined
+  let followWorktree = SIDEBAR_PREFS_DEFAULTS.followWorktree
+  const sidebarRoot: SidebarRoot = async (sessionId, clientCwd) => {
+    const base = await sessionCwdOf(ctx, sessionId, clientCwd)
+    return followWorktree ? activeWorktreeRootOf(ctx, sessionId, base) : base
+  }
   // The model-facing `sidebar_open` tool is gated on the side-card setting
   // `agentOpenTools` (default off): nothing is injected until the user turns
   // the feature on; turning it off mid-session unregisters the tool.
@@ -1529,6 +1513,8 @@ export function apply(ctx: Context, config?: SidebarConfig): void {
     )
     const viewOf = (): { value?: unknown; revision?: number } => {
       const descriptor = sctx.settings.describe({ redactSecrets: true }).find(candidate => candidate.ns === ns)
+      const value = descriptor?.value as Partial<SidebarPrefs> | undefined
+      followWorktree = value?.followWorktree ?? followWorktree
       return descriptor === undefined
         ? { value: undefined, revision: undefined }
         : { value: descriptor.value, revision: descriptor.revision }
@@ -1657,7 +1643,7 @@ export function apply(ctx: Context, config?: SidebarConfig): void {
   ctx.effect(() => () => { archiveTasks.dispose() }, 'dsh-better-sidebar: archive task table')
   const sidechatLifetime = new AbortController()
   ctx.effect(() => () => { sidechatLifetime.abort() }, 'dsh-better-sidebar: sidechat admissions')
-  const api = buildApi(ctx, resolved, () => settingsFace, assistantLive, archiveTasks, sidechatLifetime.signal)
+  const api = buildApi(ctx, resolved, () => settingsFace, sidebarRoot, assistantLive, archiveTasks, sidechatLifetime.signal)
   // Concurrent LARGE-prompt admissions. Only a prompt body that may carry
   // encoded images is counted: the prompt's JSON metadata is capped at
   // SIDECHAT_METADATA_BYTES, so a body past that threshold is the only one
@@ -1783,7 +1769,7 @@ export function apply(ctx: Context, config?: SidebarConfig): void {
         if (sessionId === null || dir === null || relativePath === null || relativePath.trim() === '') {
           throw new SidebarError('bad-request', 'sessionId, dir, and relativePath are required')
         }
-        const cwd = await activeWorktreeRootOf(ctx, sessionId, await sessionCwdOf(ctx, sessionId, url.searchParams.get('cwd') ?? undefined))
+        const cwd = await sidebarRoot(sessionId, url.searchParams.get('cwd') ?? undefined)
         const { path, size } = await writeWorkspaceUpload({
           cwd,
           dir,
@@ -1820,7 +1806,7 @@ export function apply(ctx: Context, config?: SidebarConfig): void {
         if (sessionId === null || path === null || path === '') {
           throw new SidebarError('bad-request', 'sessionId and path are required')
         }
-        const cwd = await activeWorktreeRootOf(ctx, sessionId, await sessionCwdOf(ctx, sessionId, url.searchParams.get('cwd') ?? undefined))
+        const cwd = await sidebarRoot(sessionId, url.searchParams.get('cwd') ?? undefined)
         // Optimistic concurrency: the client sends the mtime its draft was
         // based on. Absent = no gate (a brand-new file has no baseline).
         const raw = url.searchParams.get('expectedMtimeMs')
@@ -1898,7 +1884,7 @@ export function apply(ctx: Context, config?: SidebarConfig): void {
         const sessionId = url.searchParams.get('sessionId')
         const raw = url.searchParams.get('path')
         if (sessionId === null || raw === null) throw new SidebarError('bad-request', 'sessionId and path are required')
-        const cwd = await activeWorktreeRootOf(ctx, sessionId, await sessionCwdOf(ctx, sessionId, url.searchParams.get('cwd') ?? undefined))
+        const cwd = await sidebarRoot(sessionId, url.searchParams.get('cwd') ?? undefined)
         // Resolution is the shared contract's alone: relative joins the
         // session cwd, absolute stays, `~` expands against the home (#713),
         // remote-mirror namespaces project. Pre-joining here would paste a
@@ -1997,7 +1983,7 @@ export function apply(ctx: Context, config?: SidebarConfig): void {
         // back to the process cwd and is normally refused by the workspace
         // real-path guard, with the same semantics as the media route's
         // fallback.
-        const cwd = await activeWorktreeRootOf(ctx, sessionId, await sessionCwdOf(ctx, sessionId))
+        const cwd = await sidebarRoot(sessionId)
         const absolute = resolveTarget(cwd, path)
         const info = await statFileForRoute(absolute)
         if (!info.isFile()) {
@@ -2058,7 +2044,7 @@ export function apply(ctx: Context, config?: SidebarConfig): void {
         return
       }
       fsWatchWss.handleUpgrade(req as unknown as IncomingMessage, socket as unknown as Duplex, head as Buffer, (ws) => {
-        void attachFsWatch(ctx, ws, req)
+        void attachFsWatch(ctx, ws, req, sidebarRoot)
       })
     },
   }), 'dsh-better-sidebar: file-tree watch WebSocket')
@@ -2124,6 +2110,7 @@ async function attachFsWatch(
   ctx: Context,
   ws: WebSocket,
   req: SidebarHttpRequest,
+  sidebarRoot: SidebarRoot,
 ): Promise<void> {
   try {
     const url = new URL(req.url ?? '/', 'http://dsh.internal')
@@ -2145,7 +2132,7 @@ async function attachFsWatch(
     ws.on('close', () => { watchers.close() })
     ws.on('error', () => { watchers.close() })
     ws.on('message', (data) => {
-      void handleFsWatchFrame(ctx, ws, watchers, sessionId, data)
+      void handleFsWatchFrame(sidebarRoot, ws, watchers, sessionId, data)
     })
   } catch (error) {
     ws.close(1011, error instanceof Error ? error.message : String(error))
@@ -2154,14 +2141,14 @@ async function attachFsWatch(
 
 /**
  * Apply one watch frame.
- * @param ctx - host plugin context.
+ * @param sidebarRoot - resolves the current directory mode.
  * @param ws - the owning socket.
  * @param watchers - the socket's watcher set.
  * @param sessionId - the session the socket was opened for.
  * @param data - the raw frame text.
  */
 async function handleFsWatchFrame(
-  ctx: Context,
+  sidebarRoot: SidebarRoot,
   ws: WebSocket,
   watchers: DirectoryWatchers,
   sessionId: string,
@@ -2176,7 +2163,7 @@ async function handleFsWatchFrame(
   const path = typeof frame.path === 'string' ? frame.path : undefined
   if (path === undefined || path === '') return
   try {
-    const cwd = await activeWorktreeRootOf(ctx, sessionId, await sessionCwdOf(ctx, sessionId))
+    const cwd = await sidebarRoot(sessionId)
     const dir = resolveTarget(cwd, path)
     if (frame.op === 'unwatch') {
       watchers.remove(dir)

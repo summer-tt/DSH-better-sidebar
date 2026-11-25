@@ -44,8 +44,7 @@ import { createOpenInApp } from './open-in-app.ts'
 import { TreePanel } from './TreePanel.tsx'
 import { t } from './locales.ts'
 import { consumeLineTarget, peekLineTarget } from './line-target.ts'
-import { relativeTo } from './paths.ts'
-import { resolveNativeSidebarPath, resolveSidebarPath } from './paths.ts'
+import { isAbsolutePath, relativeTo, resolveNativeSidebarPath, resolveSidebarPath } from './paths.ts'
 import { clearRetargetedPath, closePathTabs, consumeRetargetedPath, pathTabKey, retargetPathTabs } from './tree-mutations.ts'
 import type { EditorToolbarControls, EditorToolbarState, FileViewerDescriptor, TabActionDescriptor } from './service.ts'
 import { firstLeaf, insertLeafAt, leafWithTab, mintTabId, type SidebarStore, type SidebarTab } from './state.ts'
@@ -516,6 +515,7 @@ export function EditorHost(props: {
   /** The path this editor last loaded (or was mounted on) — the rename retarget
    *  announces itself as a move away from it. */
   const loadedPathRef = useRef(path)
+  const relativeFileCwd = isAbsolutePath(path) ? undefined : scope.cwd
   // A mounted editor is the only thing that can claim a retarget: once it is
   // gone the announcement can never be applied, so it must not sit in the map
   // for the rest of the page's life. A remount loads the record's current path
@@ -680,10 +680,10 @@ export function EditorHost(props: {
     }
     apply(planFirstMatch(ctx.get('betterSidebar')?.matchFileViewer(path), mediaUrlOf))
     return () => { cancelled = true; controller.abort() }
-    // Granular deps: only these two fields gate the (re)fetch (see
-    // session-scope.ts for why the object itself is no longer a signal).
+    // A tree root change must not reopen an absolute file and discard its draft.
+    // Relative paths still reload when their base changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scope.sessionId, scope.cwd, path, ctx, showEmpty, isDir, reloadSeq])
+  }, [scope.sessionId, relativeFileCwd, path, ctx, showEmpty, isDir, reloadSeq])
 
   // Save-then-refresh in preview mode (issue #167 part C): the edge into
   // 'saved' (never a lingering 'saved' state) triggers exactly one reload, so
@@ -757,6 +757,7 @@ export function EditorHost(props: {
           visible={visible}
           sessionId={scope.sessionId}
           cwd={folderRoot ?? scope.cwd}
+          {...(folderRoot === undefined ? { preferences: store } : {})}
           expanded={expanded}
           revealed={revealed}
           onToggle={onToggleDir}
@@ -1009,6 +1010,7 @@ export function EditorHost(props: {
               visible={visible}
               sessionId={scope.sessionId}
               cwd={scope.cwd}
+              preferences={store}
               expanded={expanded}
               revealed={revealed}
               onToggle={onToggleDir}

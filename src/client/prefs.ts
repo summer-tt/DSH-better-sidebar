@@ -80,6 +80,9 @@ export function parsePrefs(value: unknown): SidebarPrefs {
     editorExplorer: typeof record.editorExplorer === 'boolean'
       ? record.editorExplorer
       : SIDEBAR_PREFS_DEFAULTS.editorExplorer,
+    followWorktree: typeof record.followWorktree === 'boolean'
+      ? record.followWorktree
+      : SIDEBAR_PREFS_DEFAULTS.followWorktree,
     editorGitGutter: typeof record.editorGitGutter === 'boolean'
       ? record.editorGitGutter
       : SIDEBAR_PREFS_DEFAULTS.editorGitGutter,

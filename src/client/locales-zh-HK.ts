@@ -79,6 +79,7 @@ export const zhHK: Record<string, string> = {
   editorCopyPathFailed: '無法複製路徑',
   editorRevealPathFailed: '無法在檔案管理員中開啟此路徑',
   editorPathPlaceholder: '輸入檔案路徑（相對工作階段目錄或絕對路徑），Enter 開啟',
+  followWorktree: '跟隨 Git worktree',
   editorSearchPlaceholder: '按檔案名稱搜尋…',
   editorSearchNoResults: '無匹配檔案',
   editorSearchTruncated: '結果過多，僅顯示部分匹配',

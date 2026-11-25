@@ -64,6 +64,7 @@ export const ja: Record<string, string> = {
   editorCopyPathFailed: 'パスをコピーできませんでした',
   editorRevealPathFailed: 'ファイルマネージャーでこのパスを開けませんでした',
   editorPathPlaceholder: 'ファイルパス（セッションディレクトリからの相対 or 絶対）、Enter で開く',
+  followWorktree: 'Git worktree に追従',
   editorSearchPlaceholder: 'ファイル名で検索…',
   editorSearchNoResults: '一致するファイルはありません',
   editorSearchTruncated: '結果が多すぎます — 一部のみ表示',

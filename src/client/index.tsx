@@ -386,7 +386,9 @@ export function apply(ctx: Context): void {
         const apply = (decision: BootDecision): void => {
           if (disposed || generation < appliedGeneration) return
           appliedGeneration = generation
+          const changedRootMode = sidebarStore.getPrefs().followWorktree !== decision.prefs.followWorktree
           sidebarStore.setPrefs(decision.prefs)
+          if (changedRootMode && mounted) window.dispatchEvent(new Event('dsh-sidebar:refresh-files'))
           // Mutual exclusion with the dsh-web-ui family right panel: while the
           // aionui-panel provider is selected, the sidebar must not mount at
           // all. Re-evaluated on every settings-document update (live switch).

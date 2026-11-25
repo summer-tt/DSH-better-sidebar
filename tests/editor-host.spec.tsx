@@ -614,7 +614,7 @@ describe('EditorHost (files window)', () => {
     try {
       // No editor chrome: no path input, no tree toggle, no resize handle.
       expect(container.querySelector('input[placeholder^="File path"]')).toBeNull()
-      expect(container.querySelector('button[aria-pressed]')).toBeNull()
+      expect(container.querySelector('button[aria-label="Follow Git worktree"]')?.getAttribute('aria-pressed')).toBe('true')
       expect(container.querySelector('[role="separator"]')).toBeNull()
       // The tree panel fills the whole window — its search box is the only
       // input, and (no cwd) the tree shows its no-session placeholder.

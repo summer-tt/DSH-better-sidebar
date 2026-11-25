@@ -77,6 +77,8 @@ export interface SidebarPrefs {
    * plugin takes over — is what the first open lands on. See `guideTakeover`.
    */
   editorExplorer: boolean
+  /** Let the sidebar follow linked worktrees mentioned by session tools. */
+  followWorktree: boolean
   /**
    * Whether the `code` editor paints its uncommitted changes the way VS Code
    * does (issue #212): the line number takes the tone of its change, a thin
@@ -254,6 +256,7 @@ export const SIDEBAR_PREFS_DEFAULTS: SidebarPrefs = {
   mobileDefaultTree: true,
   agentOpenTools: false,
   editorExplorer: false,
+  followWorktree: true,
   editorGitGutter: true,
   explorerExclude: [...EXPLORER_EXCLUDE_DEFAULTS],
   customCss: '',

@@ -4,6 +4,10 @@
 >
 > 📝 The Chinese [CHANGELOG](./CHANGELOG.md) is the authoritative, item-by-item record; this file carries the English summaries and has historically lagged behind it. Where the two disagree, the Chinese one is current.
 
+### Unreleased
+
+- The Files toolbar can toggle Git worktree following. Turning it off uses the session working directory. Switching modes refreshes the tree and search results immediately.
+
 ### v0.33.0
 
 - 🧩 **`/sidebar/*` works again on DSH 0.2.3** (related: [#1204](https://github.com/omdsh-dev/DSH-better-sidebar/issues/1204)): 0.2.3 moved `admit`'s credential check into the nested `connection.authentication` service, and cordis only lets a caller read that service when it **declares the dependency**. The plugin injected `connection` alone, so `admit` threw `cannot get property "connection.authentication" without inject` on the first request and the host's last-resort guard turned it into an empty-body 400 — the bottom terminal chunk, opening a file and the side chat all showed `HTTP 400` only. Admission now runs `admit` inside a `ctx.inject(['connection.authentication'])` child fiber; rc.2–rc.5 have no such service, so the fiber never activates there and those hosts keep the `requestRejection` / direct `admit` paths unchanged.

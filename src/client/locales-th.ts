@@ -64,6 +64,7 @@ export const th: Record<string, string> = {
   editorCopyPathFailed: 'คัดลอกพาธไม่สำเร็จ',
   editorRevealPathFailed: 'เปิดพาธนี้ในตัวจัดการไฟล์ไม่สำเร็จ',
   editorPathPlaceholder: 'พาธไฟล์ (สัมพันธ์กับไดเรกทอรีเซสชันหรือแบบ absolute), Enter เพื่อเปิด',
+  followWorktree: 'ติดตาม Git worktree',
   editorSearchPlaceholder: 'ค้นหาไฟล์ตามชื่อ…',
   editorSearchNoResults: 'ไม่มีไฟล์ที่ตรง',
   editorSearchTruncated: 'ผลลัพธ์มากเกินไป — แสดงเพียงบางส่วน',

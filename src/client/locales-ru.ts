@@ -60,6 +60,7 @@ export const ru: Record<string, string> = {
   editorCopyPathFailed: 'Не удалось скопировать путь',
   editorRevealPathFailed: 'Не удалось открыть этот путь в файловом менеджере',
   editorPathPlaceholder: 'Введите путь к файлу (относительно каталога сессии или абсолютный), Enter, чтобы открыть',
+  followWorktree: 'Следовать за рабочим деревом Git',
   editorSearchPlaceholder: 'Поиск по имени файла…',
   editorSearchNoResults: 'Нет совпадающих файлов',
   editorSearchTruncated: 'Слишком много результатов — показана часть совпадений',

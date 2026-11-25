@@ -1869,7 +1869,7 @@ const createFakeSettings = (pre?: Record<string, Record<string, unknown>>) => {
  * @param home - a harness home holding a retired `settings.yaml`, when the test wants the legacy import to run.
  * @returns the mounted `/sidebar/api` route.
  */
-const mountWithSettings = (settings?: unknown, home?: string): SidebarWebRoute => {
+const mountWithSettings = (settings?: unknown, home?: string, context: Record<string, unknown> = {}): SidebarWebRoute => {
   const routes: SidebarWebRoute[] = []
   lastMountedRoutes = routes
   const ctx = {
@@ -1900,6 +1900,7 @@ const mountWithSettings = (settings?: unknown, home?: string): SidebarWebRoute =
     },
     logger: { info: () => {}, warn: () => {}, debug: () => {}, error: () => {} },
     ...(home === undefined ? {} : { profileContext: { home } }),
+    ...context,
   }
   apply(ctx as never)
   return routes.find(route => route.path === '/sidebar/api')!
@@ -1925,6 +1926,36 @@ describe('open.external route', () => {
 })
 
 describe('side card settings routes', () => {
+  it('switches root and relative file reads immediately in both worktree modes', async () => {
+    const scratch = realpathSync.native(mkdtempSync(join(tmpdir(), 'sidebar-follow-toggle-')))
+    const main = join(scratch, 'main')
+    const linked = join(scratch, 'linked')
+    const run = (cwd: string, args: string[]): void => {
+      const result = spawnSync('git', ['-C', cwd, '-c', 'core.hooksPath=', '-c', 'user.name=Test', '-c', 'user.email=test@dsh.invalid', ...args], { encoding: 'utf8' })
+      if (result.status !== 0) throw new Error(result.stderr)
+    }
+    try {
+      run(scratch, ['init', '-q', '-b', 'main', main])
+      run(main, ['commit', '-q', '--allow-empty', '-m', 'initial'])
+      run(main, ['worktree', 'add', '-q', '-b', 'linked', linked])
+      writeFileSync(join(main, 'marker.txt'), 'main')
+      writeFileSync(join(linked, 'marker.txt'), 'linked')
+      const snapshotEvents = () => [{ type: 'tool/call', seq: 0, time: 0, data: { cwd: linked } }]
+      const context = { sessions: { get: () => ({ header: { cwd: main }, snapshotEvents }) } }
+      const route = mountWithSettings(createFakeSettings(), undefined, context)
+      const payload = { sessionId: 'follow-toggle', cwd: linked }
+      expect(await invoke(route, 'session.cwd', payload)).toMatchObject({ ok: true, value: { cwd: linked } })
+      expect(await invoke(route, 'settings.update', { patch: { followWorktree: false } })).toMatchObject({ ok: true })
+      expect(await invoke(route, 'session.cwd', payload)).toMatchObject({ ok: true, value: { cwd: main } })
+      expect(await invoke(route, 'fs.read', { ...payload, path: 'marker.txt' })).toMatchObject({ ok: true, value: { content: 'main' } })
+      expect(await invoke(route, 'settings.update', { patch: { followWorktree: true } })).toMatchObject({ ok: true })
+      expect(await invoke(route, 'session.cwd', payload)).toMatchObject({ ok: true, value: { cwd: linked } })
+      expect(await invoke(route, 'fs.read', { ...payload, path: 'marker.txt' })).toMatchObject({ ok: true, value: { content: 'linked' } })
+    } finally {
+      removeTree(scratch)
+    }
+  })
+
   it('serves the schema defaults when the settings service is absent', async () => {
     const route = mountWithSettings(undefined)
     const result = await invoke(route, 'settings.get', {})

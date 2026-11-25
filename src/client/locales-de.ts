@@ -50,6 +50,7 @@ export const de: Record<string, string> = {
   editorCopyPathFailed: 'Pfad konnte nicht kopiert werden',
   editorRevealPathFailed: 'Pfad konnte nicht im Dateimanager geöffnet werden',
   editorPathPlaceholder: 'Dateipfad (relativ zum Sitzungsverzeichnis oder absolut), Enter zum Öffnen',
+  followWorktree: 'Git-Worktree folgen',
   editorSearchPlaceholder: 'Nach Dateiname suchen…',
   editorSearchNoResults: 'Keine passenden Dateien',
   editorSearchTruncated: 'Zu viele Ergebnisse – nur ein Teil wird angezeigt',

@@ -62,6 +62,7 @@ export const nl: Record<string, string> = {
   editorCopyPathFailed: 'Het pad kon niet worden gekopieerd',
   editorRevealPathFailed: 'Dit pad kon niet worden geopend in bestandsbeheer',
   editorPathPlaceholder: 'Voer een bestandspad in (relatief aan de sessiemap of absoluut), Enter om te openen',
+  followWorktree: 'Git-worktree volgen',
   editorSearchPlaceholder: 'Zoek op bestandsnaam…',
   editorSearchNoResults: 'Geen overeenkomende bestanden',
   editorSearchTruncated: 'Te veel resultaten — een gedeeltelijke lijst wordt getoond',

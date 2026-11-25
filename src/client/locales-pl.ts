@@ -66,6 +66,7 @@ export const pl: Record<string, string> = {
   editorCopyPathFailed: 'Nie można skopiować ścieżki',
   editorRevealPathFailed: 'Nie można otworzyć tej ścieżki w menedżerze plików',
   editorPathPlaceholder: 'Ścieżka pliku (względna do katalogu sesji lub bezwzględna), Enter, aby otworzyć',
+  followWorktree: 'Śledź worktree Git',
   editorSearchPlaceholder: 'Szukaj po nazwie pliku…',
   editorSearchNoResults: 'Brak pasujących plików',
   editorSearchTruncated: 'Zbyt wiele wyników — pokazuję częściową listę',

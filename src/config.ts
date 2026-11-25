@@ -109,6 +109,7 @@ export const PrefsSchema: z<SidebarPrefs> = z.object({
   mobileDefaultTree: z.boolean().default(true),
   agentOpenTools: z.boolean().default(false),
   editorExplorer: z.boolean().default(false),
+  followWorktree: z.boolean().default(true),
   editorGitGutter: z.boolean().default(true),
   explorerExclude: z.array(z.string()).default([...EXPLORER_EXCLUDE_DEFAULTS]),
   customCss: z.string(),

@@ -15,6 +15,7 @@ import { beforeAll, afterEach, describe, expect, it, vi } from 'vitest'
 import { createElement, type ComponentProps } from 'react'
 import { createRoot, type Root } from 'react-dom/client'
 import { act } from 'react-dom/test-utils'
+import { createSidebarStore } from '../src/client/state.ts'
 import { TreePanel } from '../src/client/TreePanel.tsx'
 
 import { setupReactAct } from './test-utils.ts'
@@ -36,7 +37,8 @@ function defaultListing(path: string): Listing {
   return { path, entries: [{ name: 'a.ts', path: '/tmp/a.ts', isDir: false }], truncated: false }
 }
 
-const { fsTrees, fsSearch } = vi.hoisted(() => ({
+const { fsTrees, fsSearch, settingsUpdate } = vi.hoisted(() => ({
+  settingsUpdate: vi.fn(async (patch: { followWorktree: boolean }) => ({ value: patch })),
   fsTrees: vi.fn(async (_scope: unknown, paths: readonly string[]) => ({ levels: paths.map(path => defaultListing(path)) })),
   fsSearch: vi.fn(async (): Promise<{ matches: string[]; dirs: string[]; truncated: boolean }> =>
     ({ matches: ['a.ts'], dirs: [], truncated: false })),
@@ -46,6 +48,7 @@ vi.mock('../src/client/api.ts', () => ({
   api: {
     fsTrees,
     fsSearch,
+    settingsUpdate,
     // The tree reads the shared git-status store; a non-repo answer keeps
     // every row plain.
     gitStatus: async () => ({ isRepo: false, entries: [] }),
@@ -116,10 +119,34 @@ let harness: Harness
 afterEach(() => {
   harness.unmount()
   document.body.innerHTML = ''
+  settingsUpdate.mockClear()
   fsTrees.mockReset()
   fsTrees.mockImplementation(async (_scope: unknown, paths: readonly string[]) => ({ levels: paths.map(path => defaultListing(path)) }))
   fsSearch.mockReset()
   fsSearch.mockImplementation(async () => ({ matches: ['a.ts'], dirs: [], truncated: false }))
+})
+
+describe('TreePanel worktree mode', () => {
+  it('persists either mode and requests a refresh immediately after each save', async () => {
+    const preferences = createSidebarStore()
+    const refresh = vi.fn()
+    window.addEventListener('dsh-sidebar:refresh-files', refresh)
+    harness = mountPanel({ preferences })
+    try {
+      const button = harness.container.querySelector<HTMLButtonElement>('[aria-label="Follow Git worktree"]')!
+      expect(button.getAttribute('aria-pressed')).toBe('true')
+      await act(async () => { button.click() })
+      expect(settingsUpdate).toHaveBeenLastCalledWith({ followWorktree: false })
+      expect(button.getAttribute('aria-pressed')).toBe('false')
+      expect(refresh).toHaveBeenCalledTimes(1)
+      await act(async () => { button.click() })
+      expect(settingsUpdate).toHaveBeenLastCalledWith({ followWorktree: true })
+      expect(button.getAttribute('aria-pressed')).toBe('true')
+      expect(refresh).toHaveBeenCalledTimes(2)
+    } finally {
+      window.removeEventListener('dsh-sidebar:refresh-files', refresh)
+    }
+  })
 })
 
 describe('TreePanel search keeps the tree mounted', () => {

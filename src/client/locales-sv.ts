@@ -47,6 +47,7 @@ export const sv: Record<string, string> = {
   editorCopyPathFailed: 'Det gick inte att kopiera sökvägen',
   editorRevealPathFailed: 'Det gick inte att öppna sökvägen i filhanteraren',
   editorPathPlaceholder: 'Filsökväg (relativ sessionskatalogen eller absolut), Enter för att öppna',
+  followWorktree: 'Följ Git-worktree',
   editorSearchPlaceholder: 'Sök filer efter namn…',
   editorSearchNoResults: 'Inga matchande filer',
   editorSearchTruncated: 'För många resultat — visar en delvis lista',

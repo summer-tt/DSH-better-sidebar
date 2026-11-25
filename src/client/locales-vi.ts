@@ -64,6 +64,7 @@ export const vi: Record<string, string> = {
   editorCopyPathFailed: 'Không thể sao chép đường dẫn',
   editorRevealPathFailed: 'Không thể mở đường dẫn này trong trình quản lý tệp',
   editorPathPlaceholder: 'Nhập đường dẫn tệp (tương đối thư mục phiên hoặc tuyệt đối), Enter để mở',
+  followWorktree: 'Theo dõi worktree Git',
   editorSearchPlaceholder: 'Tìm theo tên tệp…',
   editorSearchNoResults: 'Không có tệp phù hợp',
   editorSearchTruncated: 'Quá nhiều kết quả, chỉ hiển thị một phần',

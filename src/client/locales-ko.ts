@@ -56,6 +56,7 @@ export const ko: Record<string, string> = {
   editorCopyPathFailed: '경로를 복사하지 못했습니다',
   editorRevealPathFailed: '파일 관리자에서 이 경로를 열지 못했습니다',
   editorPathPlaceholder: '파일 경로 입력(세션 디렉터리 기준 상대 경로 또는 절대 경로), Enter로 열기',
+  followWorktree: 'Git 워크트리 따라가기',
   editorSearchPlaceholder: '파일 이름으로 검색…',
   editorSearchNoResults: '일치하는 파일 없음',
   editorSearchTruncated: '결과가 너무 많아 일부 일치 항목만 표시합니다',

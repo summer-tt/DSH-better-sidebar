@@ -64,6 +64,7 @@ export const hi: Record<string, string> = {
   editorCopyPathFailed: 'पथ कॉपी नहीं हो सका',
   editorRevealPathFailed: 'यह पथ फ़ाइल प्रबंधक में नहीं खुल सका',
   editorPathPlaceholder: 'फ़ाइल पथ दर्ज करें (सत्र डायरेक्टरी के सापेक्ष या निरपेक्ष), Enter से खोलें',
+  followWorktree: 'Git वर्कट्री का अनुसरण करें',
   editorSearchPlaceholder: 'फ़ाइल नाम से खोजें…',
   editorSearchNoResults: 'कोई मेल खाती फ़ाइल नहीं',
   editorSearchTruncated: 'परिणाम बहुत अधिक — आंशिक सूची दिखाई जा रही',

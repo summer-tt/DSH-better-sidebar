@@ -62,6 +62,7 @@ export const id: Record<string, string> = {
   editorCopyPathFailed: 'Jalur tidak dapat disalin',
   editorRevealPathFailed: 'Jalur ini tidak dapat dibuka di pengelola berkas',
   editorPathPlaceholder: 'Path berkas (relatif terhadap direktori sesi atau absolut), Enter untuk membuka',
+  followWorktree: 'Ikuti worktree Git',
   editorSearchPlaceholder: 'Cari berkas berdasarkan nama…',
   editorSearchNoResults: 'Tidak ada berkas yang cocok',
   editorSearchTruncated: 'Terlalu banyak hasil — menampilkan daftar parsial',

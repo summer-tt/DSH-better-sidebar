@@ -47,6 +47,7 @@ export const pt: Record<string, string> = {
   editorCopyPathFailed: 'Não foi possível copiar o caminho',
   editorRevealPathFailed: 'Não foi possível abrir este caminho no gerenciador de arquivos',
   editorPathPlaceholder: 'Caminho do arquivo (relativo ao diretório da sessão ou absoluto), Enter para abrir',
+  followWorktree: 'Seguir worktree do Git',
   editorSearchPlaceholder: 'Pesquisar arquivos por nome…',
   editorSearchNoResults: 'Nenhum arquivo correspondente',
   editorSearchTruncated: 'Resultados demais — exibindo lista parcial',

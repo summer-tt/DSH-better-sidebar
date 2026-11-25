@@ -64,6 +64,7 @@ export const tr: Record<string, string> = {
   editorCopyPathFailed: 'Yol kopyalanamadı',
   editorRevealPathFailed: 'Bu yol dosya yöneticisinde açılamadı',
   editorPathPlaceholder: 'Dosya yolu (oturum dizinine göreli veya mutlak), Enter ile aç',
+  followWorktree: 'Git çalışma ağacını takip et',
   editorSearchPlaceholder: 'Dosya adına göre ara…',
   editorSearchNoResults: 'Eşleşen dosya yok',
   editorSearchTruncated: 'Sonuç çok fazla — kısmi liste gösteriliyor',

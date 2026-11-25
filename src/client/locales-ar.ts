@@ -65,6 +65,7 @@ export const ar: Record<string, string> = {
   editorCopyPathFailed: 'تعذّر نسخ المسار',
   editorRevealPathFailed: 'تعذّر فتح هذا المسار في مدير الملفات',
   editorPathPlaceholder: 'مسار الملف (نسبي لدليل الجلسة أو مطلق)، Enter للفتح',
+  followWorktree: 'متابعة شجرة عمل Git',
   editorSearchPlaceholder: 'البحث في الملفات بالاسم…',
   editorSearchNoResults: 'لا ملفات مطابقة',
   editorSearchTruncated: 'نتائج كثيرة جداً — عرض قائمة جزئية',

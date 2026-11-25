@@ -19,12 +19,13 @@
  * drop over the file window uploads here and never reaches DSH's chat
  * intake.
  */
-import { useEffect, useMemo, useRef, useState, type InputHTMLAttributes } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type InputHTMLAttributes } from 'react'
 import clsx from 'clsx'
-import { IconChevronsUpDownOutlineRegular, IconFolderOpenRegular, IconRefreshOutlineRegular, Menu } from '@deepseek-ai/dsh-client-ui-primitives'
+import { IconBranchOutlineRegular, IconChevronsUpDownOutlineRegular, IconFolderOpenRegular, IconRefreshOutlineRegular, Menu } from '@deepseek-ai/dsh-client-ui-primitives'
 import { api } from './api.ts'
 import type { BetterSidebarService } from './service.ts'
-import { ancestorDirs } from './state.ts'
+import { ancestorDirs, type SidebarStore } from './state.ts'
+import { parsePrefs } from './prefs.ts'
 import { FileTree } from './FileTree.tsx'
 import { DEFAULT_FILE_TREE_SORT, type FileTreeSort } from './file-tree-sort.ts'
 import { IconUploadOutline16 } from './icons.tsx'
@@ -94,16 +95,41 @@ export function TreePanel(props: {
   full?: boolean
   /** The sidebar registry service (file-icon registrations; passed through to FileTree). */
   service?: BetterSidebarService
+  /** Provided only for trees that browse the session root. */
+  preferences?: SidebarStore
 }) {
   const {
     sessionId, cwd, expanded, revealed, onToggle, onOpenFile, onOpenFileNewTab, onOpenFileSide,
     openInApp, openWithTargets, openWithPinned, openWithSsh, onOpenWith, onToggleOpenWithPin,
     openWithShowPluginTargets, exclude,
-    onReferenceFile, onPathRenamed, onPathDeleted, visible, full, service,
+    onReferenceFile, onPathRenamed, onPathDeleted, visible, full, service, preferences,
   } = props
+  const followWorktree = useSyncExternalStore(
+    useCallback(listener => preferences?.subscribe(listener) ?? (() => {}), [preferences]),
+    () => preferences?.getPrefs().followWorktree ?? true,
+  )
+  const [savingFollow, setSavingFollow] = useState(false)
+  const [followError, setFollowError] = useState<string | null>(null)
+  const toggleFollow = async (): Promise<void> => {
+    if (preferences === undefined || savingFollow) return
+    setSavingFollow(true)
+    setFollowError(null)
+    try {
+      const view = await api.settingsUpdate({ followWorktree: !followWorktree })
+      preferences.setPrefs(parsePrefs(view.value))
+      window.dispatchEvent(new Event('dsh-sidebar:refresh-files'))
+    } catch (failure: unknown) {
+      setFollowError(failure instanceof Error ? failure.message : String(failure))
+    } finally {
+      setSavingFollow(false)
+    }
+  }
   const [query, setQuery] = useState('')
-  const [results, setResults] = useState<{ matches: string[]; dirs: string[]; truncated: boolean } | null>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [searchAnswer, setSearchAnswer] = useState<{
+    key: string
+    results?: { matches: string[]; dirs: string[]; truncated: boolean }
+    error?: string
+  } | null>(null)
   const [refreshTick, setRefreshTick] = useState(0)
   /**
    * The explorer's row order (the header's sort control). Starts at the
@@ -199,29 +225,29 @@ export function TreePanel(props: {
   // than an assumption (a re-run resets the 300ms debounce, so a per-render
   // identity would keep the search from ever settling).
   const excludeKey = (exclude ?? []).join('\0')
+  const searchKey = JSON.stringify([sessionId, cwd, needle, excludeKey, followWorktree])
+  const results = searchAnswer?.key === searchKey ? searchAnswer.results ?? null : null
+  const error = searchAnswer?.key === searchKey ? searchAnswer.error ?? null : null
   useEffect(() => {
     if (needle === '') {
-      setResults(null)
-      setError(null)
+      setSearchAnswer(null)
       return
     }
     const controller = new AbortController()
     const patterns = excludeKey === '' ? undefined : excludeKey.split('\0')
     const timer = window.setTimeout(() => {
       api.fsSearch({ sessionId, cwd }, needle, patterns, controller.signal).then((found) => {
-        setResults(found)
-        setError(null)
+        if (!controller.signal.aborted) setSearchAnswer({ key: searchKey, results: found })
       }).catch((failure: unknown) => {
         if (controller.signal.aborted) return
-        setResults(null)
-        setError(failure instanceof Error ? failure.message : String(failure))
+        setSearchAnswer({ key: searchKey, error: failure instanceof Error ? failure.message : String(failure) })
       })
     }, 300)
     return () => {
       window.clearTimeout(timer)
       controller.abort()
     }
-  }, [sessionId, cwd, needle, excludeKey])
+  }, [sessionId, cwd, needle, excludeKey, searchKey])
 
   const busy = upload !== null
   /** Directory hits (the host reports them separately): a click navigates the
@@ -266,6 +292,15 @@ export function TreePanel(props: {
           icon={<IconRefreshOutlineRegular size={14} />}
           onClick={() => { setRefreshTick(tick => tick + 1) }}
         />
+        {preferences !== undefined && (
+          <IconButton
+            label={t('followWorktree')}
+            icon={<IconBranchOutlineRegular size={14} />}
+            active={followWorktree}
+            disabled={savingFollow || busy}
+            onClick={() => { void toggleFollow() }}
+          />
+        )}
         {/* Row order: the two keys are one choice (check mark), the
             folders-first switch is independent — the same two-group menu the
             host's own menus use. Picking a row closes the menu like every
@@ -335,6 +370,7 @@ export function TreePanel(props: {
           }}
         />
       </div>
+      {followError !== null && <div className={clsx(css.editorSearchHint, css.editorError)} role="alert">{followError}</div>}
       {uploadStatus !== '' && (
         <div className={clsx(css.editorSearchHint, uploadFailed && css.editorError)} title={uploadStatus}>{uploadStatus}</div>
       )}

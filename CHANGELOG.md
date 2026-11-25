@@ -2,6 +2,10 @@
 
 > 本文档收录 dsh-better-sidebar 的完整发布历史（最新版摘要见 [README](README_ZH.md)；同步发布于 [GitHub Releases](https://github.com/omdsh-dev/DSH-better-sidebar/releases)）。
 
+### 未发布
+
+- 文件工具栏加入“跟随 Git worktree”开关。关闭后按会话工作目录浏览，切换后立即刷新目录和搜索结果。
+
 ### v0.33.0
 
 - 🧩 **DSH 0.2.3 上 `/sidebar/*` 恢复可用**（关联 [#1204](https://github.com/omdsh-dev/DSH-better-sidebar/issues/1204)）：0.2.3 把 `admit` 的凭据校验委托给嵌套服务 `connection.authentication`，cordis 只允许**显式注入**该服务的调用方读取它；插件此前只注入 `connection`，`admit` 一被调用就抛 `cannot get property "connection.authentication" without inject`，被宿主兜底成空 body 的 400——底部终端 chunk 加载、打开文件、侧边对话全部只剩 `HTTP 400`。现在准入改走 `ctx.inject(['connection.authentication'])` 子 fiber 里的 `admit`；rc.2–rc.5 没有该服务，子 fiber 不激活，继续走 `requestRejection` / 直接 `admit`，旧宿主行为不变。

@@ -141,7 +141,7 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
-lib/
+lib/**/*.map
 
 # plugin-registry install staging (assembled by scripts/package-registry.mjs)
 registry/

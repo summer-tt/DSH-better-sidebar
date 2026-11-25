@@ -83,7 +83,6 @@
     "typecheck": "tsc --noEmit",
     "bundle": "node scripts/build-mermaid-frame-asset.mjs && tsdown",
     "watch": "node scripts/build-mermaid-frame-asset.mjs && tsdown --watch",
-    "prepare": "node scripts/build-mermaid-frame-asset.mjs && tsdown",
     "test": "vitest run",
     "test:windows": "vitest run --maxWorkers=1",
     "test:mount": "bash scripts/e2e-mount.sh",

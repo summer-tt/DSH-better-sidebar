@@ -286,6 +286,7 @@ export declare const api: {
         matches: string[];
         dirs: string[];
         truncated: boolean;
+        cwd?: string;
     }>;
     fsRead: (scope: SessionScope, path: string, signal?: AbortSignal) => Promise<FsReadResult>;
     /** One page of a large text file, for the read-only paged preview.

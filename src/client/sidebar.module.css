@@ -1433,6 +1433,7 @@ body[data-dsh-sidebar-dragging] .bottomPanel {
 }
 
 .editorTreePanel {
+  container: sidebar-file-tree / inline-size;
   /* Relative so the upload overlay and drop pill can cover the tree exactly. */
   position: relative;
   flex: 1;
@@ -1480,6 +1481,31 @@ body[data-dsh-sidebar-dragging] .bottomPanel {
   background: var(--dsw-alias-bg-layer-1);
   color: var(--dsw-alias-label-primary);
   font: var(--dsw-font-xxs-12);
+}
+
+.editorTreeTools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-inline-start: auto;
+}
+
+@container sidebar-file-tree (max-width: 279px) {
+  .editorTreeSearch,
+  .nativeTabHost .editorTreeSearch {
+    height: auto;
+    flex-wrap: wrap;
+    padding-block: 4px;
+  }
+
+  .editorTreeSearch .editorSearchInput {
+    box-sizing: border-box;
+    flex-basis: 100%;
+  }
+
+  .editorTreeTools {
+    gap: 1px;
+  }
 }
 
 .editorSearchInput:focus {

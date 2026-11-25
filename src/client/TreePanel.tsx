@@ -127,7 +127,7 @@ export function TreePanel(props: {
   const [query, setQuery] = useState('')
   const [searchAnswer, setSearchAnswer] = useState<{
     key: string
-    results?: { matches: string[]; dirs: string[]; truncated: boolean }
+    results?: { matches: string[]; dirs: string[]; truncated: boolean; cwd?: string }
     error?: string
   } | null>(null)
   const [refreshTick, setRefreshTick] = useState(0)
@@ -268,7 +268,7 @@ export function TreePanel(props: {
   // path that toggle nothing and persist as junk `expanded` entries. Such a
   // row only clears the query.
   const openSearchDir = (rel: string): void => {
-    const target = resolveSidebarPath(cwd, rel)
+    const target = resolveSidebarPath(results?.cwd ?? cwd, rel)
     if (cwd !== undefined && isWithinWorkspace(cwd, target)) {
       for (const path of [...ancestorDirs(cwd, [target]), target]) {
         if (!expanded.includes(path)) onToggle(path)
@@ -287,67 +287,69 @@ export function TreePanel(props: {
           spellCheck={false}
           onChange={(event) => { setQuery(event.target.value) }}
         />
-        <IconButton
-          label={t('refresh')}
-          icon={<IconRefreshOutlineRegular size={14} />}
-          onClick={() => { setRefreshTick(tick => tick + 1) }}
-        />
-        {preferences !== undefined && (
+        <div className={css.editorTreeTools}>
           <IconButton
-            label={t('followWorktree')}
-            icon={<IconBranchOutlineRegular size={14} />}
-            active={followWorktree}
-            disabled={savingFollow || busy}
-            onClick={() => { void toggleFollow() }}
+            label={t('refresh')}
+            icon={<IconRefreshOutlineRegular size={14} />}
+            onClick={() => { setRefreshTick(tick => tick + 1) }}
           />
-        )}
-        {/* Row order: the two keys are one choice (check mark), the
-            folders-first switch is independent — the same two-group menu the
-            host's own menus use. Picking a row closes the menu like every
-            other menu in the plugin. */}
-        <Menu
-          open={sortOpen}
-          onClose={() => { setSortOpen(false) }}
-          onSelect={(id) => {
-            setSort((current) => {
-              if (id === 'sort-name') return { ...current, key: 'name' }
-              if (id === 'sort-type') return { ...current, key: 'type' }
-              return { ...current, dirsFirst: !current.dirsFirst }
-            })
-            setSortOpen(false)
-          }}
-          items={[
-            { id: 'sort-name', label: t('sortByName'), icon: <IconChevronsUpDownOutlineRegular size={14} /> },
-            { id: 'sort-type', label: t('sortByType'), icon: <IconChevronsUpDownOutlineRegular size={14} /> },
-            { type: 'separator', id: 'sort-sep' },
-            { id: 'sort-folders-first', label: t('sortFoldersFirst') },
-          ]}
-          selectedIds={[
-            sort.key === 'name' ? 'sort-name' : 'sort-type',
-            ...(sort.dirsFirst ? ['sort-folders-first'] : []),
-          ]}
-          align="end"
-          compact
-          anchor={(
+          {preferences !== undefined && (
             <IconButton
-              label={t('sort')}
-              icon={<IconChevronsUpDownOutlineRegular size={14} />}
-              onClick={() => { setSortOpen(open => !open) }}
+              label={t('followWorktree')}
+              icon={<IconBranchOutlineRegular size={14} />}
+              active={followWorktree}
+              disabled={savingFollow || busy}
+              onClick={() => { void toggleFollow() }}
             />
           )}
-        />
-        <IconButton
-          label={t('uploadFiles')}
-          icon={<IconUploadOutline16 size={14} />}
-          disabled={busy}
-          onClick={() => { fileInputRef.current?.click() }}
-        />
-        <IconButton
-          label={t('uploadFolder')}
-          icon={<IconFolderOpenRegular size={14} />}
-          disabled={busy}
-          onClick={() => { folderInputRef.current?.click() }}
-        />
+          {/* Row order: the two keys are one choice (check mark), the
+              folders-first switch is independent — the same two-group menu the
+              host's own menus use. Picking a row closes the menu like every
+              other menu in the plugin. */}
+          <Menu
+            open={sortOpen}
+            onClose={() => { setSortOpen(false) }}
+            onSelect={(id) => {
+              setSort((current) => {
+                if (id === 'sort-name') return { ...current, key: 'name' }
+                if (id === 'sort-type') return { ...current, key: 'type' }
+                return { ...current, dirsFirst: !current.dirsFirst }
+              })
+              setSortOpen(false)
+            }}
+            items={[
+              { id: 'sort-name', label: t('sortByName'), icon: <IconChevronsUpDownOutlineRegular size={14} /> },
+              { id: 'sort-type', label: t('sortByType'), icon: <IconChevronsUpDownOutlineRegular size={14} /> },
+              { type: 'separator', id: 'sort-sep' },
+              { id: 'sort-folders-first', label: t('sortFoldersFirst') },
+            ]}
+            selectedIds={[
+              sort.key === 'name' ? 'sort-name' : 'sort-type',
+              ...(sort.dirsFirst ? ['sort-folders-first'] : []),
+            ]}
+            align="end"
+            compact
+            anchor={(
+              <IconButton
+                label={t('sort')}
+                icon={<IconChevronsUpDownOutlineRegular size={14} />}
+                onClick={() => { setSortOpen(open => !open) }}
+              />
+            )}
+          />
+          <IconButton
+            label={t('uploadFiles')}
+            icon={<IconUploadOutline16 size={14} />}
+            disabled={busy}
+            onClick={() => { fileInputRef.current?.click() }}
+          />
+          <IconButton
+            label={t('uploadFolder')}
+            icon={<IconFolderOpenRegular size={14} />}
+            disabled={busy}
+            onClick={() => { folderInputRef.current?.click() }}
+          />
+        </div>
         <input
           ref={fileInputRef}
           type="file"
@@ -399,7 +401,7 @@ export function TreePanel(props: {
                   data-dsh-search-dir={isDirHit ? 'true' : undefined}
                   onClick={() => {
                     if (isDirHit) openSearchDir(rel)
-                    else onOpenFile(resolveSidebarPath(cwd, rel))
+                    else onOpenFile(resolveSidebarPath(results.cwd ?? cwd, rel))
                   }}
                 >
                   {isDirHit && <IconFolderOpenRegular size={14} />}

@@ -105,6 +105,15 @@ test('the explorer stays under the session cwd and a relative link opens the fil
   // The plugin took the built-in `files` kind over, so this guide entry IS its
   // explorer.
   await page.locator('[data-sidebar-right-guide-entry="files"]').click()
+  const follow = pane.getByRole('button', { name: 'Follow Git worktree' })
+  await expect(follow).toHaveAttribute('aria-pressed', 'true')
+  for (const state of ['false', 'true']) {
+    const refresh = page.waitForRequest(req => req.url().endsWith('/sidebar/api/session.cwd'))
+    await follow.click()
+    await expect(follow).toHaveAttribute('aria-pressed', state)
+    await refresh
+  }
+
 
   const readmeRow = pane.locator('[role="button"][title$="README.md"]:visible')
   await expect(readmeRow, 'the subdirectory\'s own file must appear in the explorer').toHaveCount(1, { timeout: 30_000 })

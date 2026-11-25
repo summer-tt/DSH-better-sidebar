@@ -40,7 +40,7 @@ function defaultListing(path: string): Listing {
 const { fsTrees, fsSearch, settingsUpdate } = vi.hoisted(() => ({
   settingsUpdate: vi.fn(async (patch: { followWorktree: boolean }) => ({ value: patch })),
   fsTrees: vi.fn(async (_scope: unknown, paths: readonly string[]) => ({ levels: paths.map(path => defaultListing(path)) })),
-  fsSearch: vi.fn(async (): Promise<{ matches: string[]; dirs: string[]; truncated: boolean }> =>
+  fsSearch: vi.fn(async (): Promise<{ matches: string[]; dirs: string[]; truncated: boolean; cwd?: string }> =>
     ({ matches: ['a.ts'], dirs: [], truncated: false })),
 }))
 
@@ -257,6 +257,15 @@ describe('TreePanel directory hits navigate instead of opening', () => {
     // itself is toggled (a repeat toggle would COLLAPSE an open ancestor).
     expect(onToggle).toHaveBeenCalledTimes(1)
     expect(onToggle).toHaveBeenCalledWith('/w/app/src/deep')
+  })
+
+  it('opens a relative result under the root that the host searched', async () => {
+    fsSearch.mockResolvedValue({ matches: ['a.ts'], dirs: [], truncated: false, cwd: '/new-root' })
+    const onOpenFile = vi.fn()
+    harness = mountPanel({ cwd: '/old-root', onOpenFile })
+    await search(harness.container, 'a.ts')
+    await act(async () => { resultRows(harness.container)[0]?.click() })
+    expect(onOpenFile).toHaveBeenCalledWith('/new-root/a.ts')
   })
 
   it('still opens a file hit, leaving the expansion state untouched', async () => {

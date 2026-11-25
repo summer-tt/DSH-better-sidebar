@@ -873,7 +873,8 @@ function buildApi(
       const { cwd } = await cwdOf(payload)
       const record = payload as { exclude?: unknown }
       const query = requireString(payload, 'query')
-      return searchFiles(cwd, query, { exclude: compileExcludePatterns(record.exclude, cwd) })
+      const result = await searchFiles(cwd, query, { exclude: compileExcludePatterns(record.exclude, cwd) })
+      return { ...result, cwd }
     },
     'fs.read': async (payload) => {
       const { cwd } = await cwdOf(payload)

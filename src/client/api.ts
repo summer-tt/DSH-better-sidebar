@@ -456,7 +456,7 @@ export const api = {
    *  never match and are never descended (host-side, in lockstep with the
    *  tree; a pasted direct-open path is explicit intent and skips it). */
   fsSearch: (scope: SessionScope, query: string, exclude?: readonly string[], signal?: AbortSignal) =>
-    call<{ matches: string[]; dirs: string[]; truncated: boolean }>('fs.search', scopePayload(scope, { query, exclude }), signal),
+    call<{ matches: string[]; dirs: string[]; truncated: boolean; cwd?: string }>('fs.search', scopePayload(scope, { query, exclude }), signal),
   fsRead: (scope: SessionScope, path: string, signal?: AbortSignal) =>
     call<FsReadResult>('fs.read', scopePayload(scope, { path }), signal),
   /** One page of a large text file, for the read-only paged preview.

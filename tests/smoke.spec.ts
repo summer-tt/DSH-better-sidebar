@@ -279,13 +279,17 @@ describe('host plugin smoke', () => {
   })
 
   it('enriches the log (full hash + refs) and renders commit diffs', async () => {
-    const cwd = process.cwd()
-    const log = await git.log(cwd)
-    const first = log[0]!
-    expect(first.hashFull).toMatch(/^[0-9a-f]{40}$/)
-    expect(typeof first.refs).toBe('string')
-    const patch = await git.commitDiff(cwd, first.hashFull)
-    expect(patch).toContain('diff --git')
+    const cwd = makeNestedScratchRepo()
+    try {
+      const log = await git.log(cwd)
+      const first = log[0]!
+      expect(first.hashFull).toMatch(/^[0-9a-f]{40}$/)
+      expect(typeof first.refs).toBe('string')
+      const patch = await git.commitDiff(cwd, first.hashFull)
+      expect(patch).toContain('diff --git')
+    } finally {
+      removeTree(cwd)
+    }
   })
 
   it('pages the log lazily with skip/count', async () => {
